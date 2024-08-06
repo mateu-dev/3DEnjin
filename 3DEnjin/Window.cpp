@@ -1,10 +1,10 @@
 #include "Window.h"
 
 Window::Window(HINSTANCE hInstance, int nCmdShow) : hInstance_(hInstance), nCmdShow_(nCmdShow) {}
-Canvas::Canvas(HDC hdc) : hdc_(hdc) {}
+Canvas::Canvas(HDC hdc, Vector2i size) : hdc_(hdc), size(size) {}
 UpdateCallback Window::updateCallback_;
 InputState Window::inputState;
-int Window::fps_;
+int Window::fps_ = 60;
 
 bool Window::CreateWindowAndRun() {
 	if (!RegisterWindowClass()) {
@@ -93,7 +93,8 @@ LRESULT CALLBACK Window::WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
 
 		EndPaint(hWnd, &ps);
 
-		Sleep(1000 / fps_);
+		if (fps_ != -1)
+			Sleep(1000 / fps_);
 		InvalidateRect(hWnd, nullptr, false);
 	}break;
 	case WM_KEYDOWN:
@@ -175,9 +176,6 @@ void Canvas::DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3,
 	HPEN hPen = CreatePen(PS_SOLID, 1, color);
 	HPEN hOldPen = (HPEN)SelectObject(hdc_, hPen);
 
-	std::string msg = std::to_string(color) + "\n";
-	OutputDebugStringA(msg.c_str());
-
 	HBRUSH hBrush = (HBRUSH)CreateSolidBrush(color);
 	HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
 
@@ -187,4 +185,46 @@ void Canvas::DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3,
 	SelectObject(hdc_, hOldBrush);
 	DeleteObject(hPen);
 	DeleteObject(hBrush);
+}
+
+void Canvas::DrawShapeWithTexture(const std::string& textureFilePath, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4) {
+	Vector2f vertices[] = { v1, v2, v3, v4 };
+
+	std::vector<POINT> points(4);
+	for (int i = 0; i < 4; ++i) {
+		points[i] = { static_cast<LONG>(vertices[i].x), static_cast<LONG>(vertices[i].y) };
+	}
+
+	// Load the texture bitmap
+	std::wstring fp = std::wstring(textureFilePath.begin(), textureFilePath.end());
+	HBITMAP hBitmap = (HBITMAP)LoadImage(NULL, fp.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
+	if (hBitmap == NULL) {
+		// Handle error if bitmap loading fails
+		return;
+	}
+
+	// Create a pattern brush from the bitmap
+	HBRUSH hBrush = CreatePatternBrush(hBitmap);
+	if (hBrush == NULL) {
+		// Handle error if pattern brush creation fails
+		DeleteObject(hBitmap);
+		return;
+	}
+
+	// Select the pattern brush and pen into the device context
+	HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
+	HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); // Use black pen for the outline
+	HPEN hOldPen = (HPEN)SelectObject(hdc_, hPen);
+
+	// Draw the polygon
+	Polygon(hdc_, points.data(), 4);
+
+	// Restore the old pen and brush
+	SelectObject(hdc_, hOldPen);
+	SelectObject(hdc_, hOldBrush);
+
+	// Clean up
+	DeleteObject(hPen);
+	DeleteObject(hBrush);
+	DeleteObject(hBitmap);
 }

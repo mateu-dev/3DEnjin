@@ -1,18 +1,5 @@
-﻿  3DEnjin.cpp
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(41,17): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(49,41): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(85,43): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(85,89): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(90,34): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(90,80): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(95,34): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(95,80): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(138,91): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(138,66): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(138,100): warning C4305: 'argument': truncation from 'double' to 'const float'
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(146,14): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(147,58): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(147,106): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(148,62): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\3DEnjin.cpp(148,118): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+﻿  Mesh.cpp
+C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(3,17): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(11,41): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(120,24): warning C4305: 'argument': truncation from 'double' to 'const float'
   3DEnjin.vcxproj -> C:\Users\mateu\source\repos\3DEnjin\x64\Debug\3DEnjin.exe

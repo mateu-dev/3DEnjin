@@ -2,6 +2,7 @@
 #define WIN32_WINDOW_H
 
 #include "framework.h"
+
 typedef std::function<void(HDC&)> UpdateCallback;
 
 struct InputState {
@@ -38,10 +39,12 @@ private:
 
 class Canvas {
 public:
-	Canvas(HDC hdc);
+	Canvas(HDC hdc, Vector2i size);
 	void DrawLine(const Vector2f& pos1, const Vector2f& pos2);
 	void DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4);
+	void DrawShapeWithTexture(const std::string& textureFilePath, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4);
 	HDC hdc_;
+	Vector2i size;
 private:
 };
 
