@@ -2,15 +2,18 @@
 #define VECTOR_H
 
 #include <cmath>
+struct Vector2i;
 
 struct Vector2f {
 	float x, y;
 	Vector2f(float x, float y) : x(x), y(y) {}
+	Vector2f(const Vector2i& vec);
 };
 
 struct Vector2i {
 	int x, y;
 	Vector2i(int x, int y) : x(x), y(y) {}
+	Vector2i(const Vector2f& vec);
 };
 
 struct Vector3f {

@@ -1,5 +1,5 @@
-﻿  Mesh.cpp
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(3,17): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(11,41): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.cpp(120,24): warning C4305: 'argument': truncation from 'double' to 'const float'
+﻿  3DEnjin.cpp
+C:\Users\mateu\source\repos\3DEnjin\3DEnjin\Mesh.h(94,20): warning C4305: 'initializing': truncation from 'double' to 'float'
+  (compiling source file '3DEnjin.cpp')
+  
   3DEnjin.vcxproj -> C:\Users\mateu\source\repos\3DEnjin\x64\Debug\3DEnjin.exe

@@ -3,20 +3,26 @@
 #define RAD 0.0174533 
 
 struct Trig;
+struct InputState;
 class Transform;
 class Cube;
 class Canvas;
+class Light;
 
 class Scene {
 	void SortByDepth(std::vector<std::unique_ptr<Trig>>&);
 public:
 	std::vector<Transform*> objects;
+	std::vector<Light*> lights;
+
 
 	Vector3f cameraPosition = { 0,0,0 };
 	Vector3f cameraRotation = { 0,0,0 };
 
 	void RenderScene(Canvas&);
 	Vector2f CalculatePointPosition(Vector2i, Vector3f);
+	void Freecam(InputState&, float, float);
+	void DrawSkyBox(Canvas&, long, long) const;
 };
 
 struct Trig {
@@ -32,7 +38,7 @@ public:
 	std::vector<Vector3f> ToCameraSpace(Scene*);
 	void Render(Scene*, Canvas&);
 	float DepthTest(Scene*);
-	Vector3f CalculateNormal(Scene*);
+	Vector3f CalculateNormal(Scene* s, bool inCameraSpace = true);
 	bool IsBackFace(Scene*);
 };
 
@@ -80,5 +86,25 @@ private:
 public:
 	Mesh(std::string, Scene*, Vector3f, Vector3f, Vector3f);
 	void GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec);
+};
+
+class Light : public Transform {
+public:
+	long color = RGB(255, 252, 232);
+	float intensity = .1;
+	Light(Scene*, Vector3f, Vector3f, Vector3f);
+	virtual void Render(Canvas&);
+};
+
+class Sun :public Light {
+	Vector2f lastPos = { -1,-1 };
+	Vector3f initialPosition = { 0,0,0 };
+public:
+	float time;
+
+	Sun(Scene* scene, float time);
+	Sun(Scene* scene, float time, long color, float intensity);
+	Vector3f CalculatePositionAtTime(float time);
+	void Render(Canvas& c);
 };
 

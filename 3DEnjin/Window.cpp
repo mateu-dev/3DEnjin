@@ -7,6 +7,7 @@ InputState Window::inputState;
 int Window::fps_ = 60;
 
 bool Window::CreateWindowAndRun() {
+	inputState.parent = this;
 	if (!RegisterWindowClass()) {
 		return false;
 	}
@@ -186,45 +187,130 @@ void Canvas::DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3,
 	DeleteObject(hPen);
 	DeleteObject(hBrush);
 }
+void Canvas::DrawShape(const long& topColor, const long& bottomColor, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4) {
+	TRIVERTEX vertex[4];
+	vertex[0].x = static_cast<LONG>(v1.x);
+	vertex[0].y = static_cast<LONG>(v1.y);
+	vertex[0].Red = GetRValue(topColor) << 8;
+	vertex[0].Green = GetGValue(topColor) << 8;
+	vertex[0].Blue = GetBValue(topColor) << 8;
+	vertex[0].Alpha = 0x0000;
 
-void Canvas::DrawShapeWithTexture(const std::string& textureFilePath, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4) {
-	Vector2f vertices[] = { v1, v2, v3, v4 };
+	vertex[1].x = static_cast<LONG>(v2.x);
+	vertex[1].y = static_cast<LONG>(v2.y);
+	vertex[1].Red = GetRValue(topColor) << 8;
+	vertex[1].Green = GetGValue(topColor) << 8;
+	vertex[1].Blue = GetBValue(topColor) << 8;
+	vertex[1].Alpha = 0x0000;
 
-	std::vector<POINT> points(4);
-	for (int i = 0; i < 4; ++i) {
-		points[i] = { static_cast<LONG>(vertices[i].x), static_cast<LONG>(vertices[i].y) };
-	}
+	vertex[2].x = static_cast<LONG>(v3.x);
+	vertex[2].y = static_cast<LONG>(v3.y);
+	vertex[2].Red = GetRValue(bottomColor) << 8;
+	vertex[2].Green = GetGValue(bottomColor) << 8;
+	vertex[2].Blue = GetBValue(bottomColor) << 8;
+	vertex[2].Alpha = 0x0000;
 
-	// Load the texture bitmap
-	std::wstring fp = std::wstring(textureFilePath.begin(), textureFilePath.end());
-	HBITMAP hBitmap = (HBITMAP)LoadImage(NULL, fp.c_str(), IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
-	if (hBitmap == NULL) {
-		// Handle error if bitmap loading fails
-		return;
-	}
+	vertex[3].x = static_cast<LONG>(v4.x);
+	vertex[3].y = static_cast<LONG>(v4.y);
+	vertex[3].Red = GetRValue(bottomColor) << 8;
+	vertex[3].Green = GetGValue(bottomColor) << 8;
+	vertex[3].Blue = GetBValue(bottomColor) << 8;
+	vertex[3].Alpha = 0x0000;
 
-	// Create a pattern brush from the bitmap
-	HBRUSH hBrush = CreatePatternBrush(hBitmap);
-	if (hBrush == NULL) {
-		// Handle error if pattern brush creation fails
-		DeleteObject(hBitmap);
-		return;
-	}
+	GRADIENT_TRIANGLE gTriangle[2];
+	gTriangle[0].Vertex1 = 0;
+	gTriangle[0].Vertex2 = 1;
+	gTriangle[0].Vertex3 = 2;
 
-	// Select the pattern brush and pen into the device context
-	HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
-	HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0)); // Use black pen for the outline
-	HPEN hOldPen = (HPEN)SelectObject(hdc_, hPen);
+	gTriangle[1].Vertex1 = 0;
+	gTriangle[1].Vertex2 = 2;
+	gTriangle[1].Vertex3 = 3;
 
-	// Draw the polygon
-	Polygon(hdc_, points.data(), 4);
+	GradientFill(hdc_, vertex, 4, gTriangle, 2, GRADIENT_FILL_TRIANGLE);
+}
 
-	// Restore the old pen and brush
-	SelectObject(hdc_, hOldPen);
-	SelectObject(hdc_, hOldBrush);
+void Canvas::DrawCircle(const long& color, const Vector2f& pos, const float radius) {
+	// Convert color from long to COLORREF
+	COLORREF colorRef = static_cast<COLORREF>(color);
+
+	// Save the current brush
+	HBRUSH hBrushOld;
+	HBRUSH hBrush = CreateSolidBrush(colorRef);
+	hBrushOld = (HBRUSH)SelectObject(hdc_, hBrush);
+
+	// Save the current pen
+	HPEN hPenOld;
+	HPEN hPen = CreatePen(PS_SOLID, 1, colorRef);
+	hPenOld = (HPEN)SelectObject(hdc_, hPen);
+
+	// Draw the circle
+	Ellipse(hdc_, static_cast<int>(pos.x - radius), static_cast<int>(pos.y - radius), static_cast<int>(pos.x + radius), static_cast<int>(pos.y + radius));
+
+	// Restore the original brush and pen
+	SelectObject(hdc_, hBrushOld);
+	SelectObject(hdc_, hPenOld);
 
 	// Clean up
-	DeleteObject(hPen);
 	DeleteObject(hBrush);
-	DeleteObject(hBitmap);
+	DeleteObject(hPen);
+}
+
+void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& innerColor, const long& outerColor) {
+	int steps = 100;  // Number of steps for the gradient
+	for (int i = steps; i > 0; --i) {
+		float t = static_cast<float>(i) / steps;
+		float currentRadius = t * radius;
+
+		// Interpolate colors
+		BYTE r = static_cast<BYTE>(GetRValue(innerColor) * (1 - t) + GetRValue(outerColor) * t);
+		BYTE g = static_cast<BYTE>(GetGValue(innerColor) * (1 - t) + GetGValue(outerColor) * t);
+		BYTE b = static_cast<BYTE>(GetBValue(innerColor) * (1 - t) + GetBValue(outerColor) * t);
+		long currentColor = RGB(r, g, b);
+
+		HBRUSH hBrush = CreateSolidBrush(currentColor);
+		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
+
+		HPEN hOldPen = (HPEN)SelectObject(hdc_, GetStockObject(NULL_PEN));
+		// Draw the circle
+		Ellipse(hdc_,
+			static_cast<int>(center.x - currentRadius),
+			static_cast<int>(center.y - currentRadius),
+			static_cast<int>(center.x + currentRadius),
+			static_cast<int>(center.y + currentRadius));
+
+		SelectObject(hdc_, hOldPen);
+		SelectObject(hdc_, hOldBrush);
+		DeleteObject(hBrush);
+	}
+}
+
+COLORREF Canvas::MixColors(COLORREF color1, COLORREF color2, double percentage) {
+	if (percentage < 0.0) percentage = 0.0;
+	if (percentage > 1.0) percentage = 1.0;
+
+	BYTE r = static_cast<BYTE>(GetRValue(color1) * percentage + GetRValue(color2) * (1 - percentage));
+	BYTE g = static_cast<BYTE>(GetGValue(color1) * percentage + GetGValue(color2) * (1 - percentage));
+	BYTE b = static_cast<BYTE>(GetBValue(color1) * percentage + GetBValue(color2) * (1 - percentage));
+	return RGB(r, g, b);
+}
+
+COLORREF Canvas::MixColors(COLORREF color1, COLORREF color2) {
+	BYTE r = (GetRValue(color1) + GetRValue(color2)) / 2;
+	BYTE g = (GetGValue(color1) + GetGValue(color2)) / 2;
+	BYTE b = (GetBValue(color1) + GetBValue(color2)) / 2;
+	return RGB(r, g, b);
+}
+
+COLORREF Canvas::DarkenColor(COLORREF color, double percentage) {
+	BYTE r = static_cast<BYTE>(GetRValue(color) * (1 - percentage));
+	BYTE g = static_cast<BYTE>(GetGValue(color) * (1 - percentage));
+	BYTE b = static_cast<BYTE>(GetBValue(color) * (1 - percentage));
+	return RGB(r, g, b);
+}
+
+COLORREF Canvas::LightenColor(COLORREF color, double percentage) {
+	BYTE r = static_cast<BYTE>(GetRValue(color) + (255 - GetRValue(color)) * percentage);
+	BYTE g = static_cast<BYTE>(GetGValue(color) + (255 - GetGValue(color)) * percentage);
+	BYTE b = static_cast<BYTE>(GetBValue(color) + (255 - GetBValue(color)) * percentage);
+	return RGB(r, g, b);
 }
