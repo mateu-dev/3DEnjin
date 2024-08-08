@@ -169,7 +169,7 @@ void Canvas::DrawLine(const Vector2f& pos1, const Vector2f& pos2) {
 void Canvas::DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4) {
 	Vector2f vertices[] = { v1,v2,v3,v4 };
 
-	std::vector<POINT> points(4);
+	POINT points[4];
 	for (int i = 0; i < 4; ++i) {
 		points[i] = { static_cast<LONG>(vertices[i].x), static_cast<LONG>(vertices[i].y) };
 	}
@@ -180,7 +180,7 @@ void Canvas::DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3,
 	HBRUSH hBrush = (HBRUSH)CreateSolidBrush(color);
 	HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
 
-	Polygon(hdc_, points.data(), 4);
+	Polygon(hdc_, points, 4);
 
 	SelectObject(hdc_, hOldPen);
 	SelectObject(hdc_, hOldBrush);
@@ -256,7 +256,7 @@ void Canvas::DrawCircle(const long& color, const Vector2f& pos, const float radi
 }
 
 void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& innerColor, const long& outerColor) {
-	int steps = 100;  // Number of steps for the gradient
+	int steps = 30;
 	for (int i = steps; i > 0; --i) {
 		float t = static_cast<float>(i) / steps;
 		float currentRadius = t * radius;
@@ -266,7 +266,6 @@ void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& inner
 		BYTE g = static_cast<BYTE>(GetGValue(innerColor) * (1 - t) + GetGValue(outerColor) * t);
 		BYTE b = static_cast<BYTE>(GetBValue(innerColor) * (1 - t) + GetBValue(outerColor) * t);
 		long currentColor = RGB(r, g, b);
-
 		HBRUSH hBrush = CreateSolidBrush(currentColor);
 		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
 
@@ -285,8 +284,7 @@ void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& inner
 }
 
 COLORREF Canvas::MixColors(COLORREF color1, COLORREF color2, double percentage) {
-	if (percentage < 0.0) percentage = 0.0;
-	if (percentage > 1.0) percentage = 1.0;
+	percentage = clamp<double>(percentage, 0, 1);
 
 	BYTE r = static_cast<BYTE>(GetRValue(color1) * percentage + GetRValue(color2) * (1 - percentage));
 	BYTE g = static_cast<BYTE>(GetGValue(color1) * percentage + GetGValue(color2) * (1 - percentage));

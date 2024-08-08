@@ -170,10 +170,7 @@ float Trig::DepthTest(Scene* s)
 }
 Vector3f Trig::CalculateNormal(Scene* s, bool inCameraSpace)
 {
-	Vector3f* pointSpace;
-	if (inCameraSpace) pointSpace = cameraSpacePoints;
-	else pointSpace = points;
-
+	Vector3f* pointSpace = inCameraSpace ? cameraSpacePoints : points;
 
 	Vector3f edge1 = pointSpace[1] - pointSpace[0];
 	Vector3f edge2 = pointSpace[2] - pointSpace[0];
@@ -190,7 +187,6 @@ bool Trig::IsBackFace(Scene* s)
 
 Transform::Transform(Vector3f pos, Vector3f scale, Vector3f rot, Vector3f pivot) :pos(pos), scale(scale), rotation(rot), pivot(pivot) {}
 Vector3f Transform::RotateAround(Vector3f point, Vector3f pivot, Vector3f rotation) {
-
 	rotation = rotation * RAD;
 	// Rotate Y
 	float dist = sqrtf(powf(point.y - pivot.y, 2) + powf(point.z - pivot.z, 2));
