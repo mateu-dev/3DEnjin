@@ -6,18 +6,23 @@ struct Vector2i;
 
 struct Vector2f {
 	float x, y;
+
+	Vector2f() :x(0), y(0) {}
 	Vector2f(float x, float y) : x(x), y(y) {}
 	Vector2f(const Vector2i& vec);
 };
 
 struct Vector2i {
 	int x, y;
+
+	Vector2i() :x(0), y(0) {}
 	Vector2i(int x, int y) : x(x), y(y) {}
 	Vector2i(const Vector2f& vec);
 };
 
 struct Vector3f {
 	float x, y, z;
+	Vector3f() :x(0), y(0), z(0) {}
 	Vector3f(float x, float y, float z) : x(x), y(y), z(z) {}
 
 	Vector3f Cross(const Vector3f& other) const {

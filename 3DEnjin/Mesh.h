@@ -10,7 +10,7 @@ class Canvas;
 class Light;
 
 class Scene {
-	void SortByDepth(std::vector<std::unique_ptr<Trig>>&);
+	void SortByDepth(std::vector<Trig>&);
 public:
 	std::vector<Transform*> objects;
 	std::vector<Light*> lights;
@@ -27,15 +27,13 @@ public:
 
 struct Trig {
 private:
-	std::vector<Vector3f> cameraSpaceCache;
+	Vector3f cameraSpacePoints[3];
 public:
-	Vector3f* points;
+	Vector3f points[3];
 	long color;
 
-	Trig(Vector3f, Vector3f, Vector3f, long);
-	~Trig();
+	Trig(Scene*, Vector3f, Vector3f, Vector3f, long);
 
-	std::vector<Vector3f> ToCameraSpace(Scene*);
 	void Render(Scene*, Canvas&);
 	float DepthTest(Scene*);
 	Vector3f CalculateNormal(Scene* s, bool inCameraSpace = true);
@@ -46,7 +44,7 @@ class Transform {
 public:
 	Vector3f pos, scale, pivot, rotation;
 	static Vector3f RotateAround(Vector3f, Vector3f, Vector3f);
-	virtual void GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec) {};
+	virtual void GetTransformedGeometry(std::vector<Trig>& vec) {};
 protected:
 	Scene* parent = nullptr;
 	Transform(Vector3f, Vector3f, Vector3f, Vector3f);
@@ -59,7 +57,7 @@ public:
 	Cube(Scene*, Vector3f, Vector3f, Vector3f);
 	Cube(Scene*, Vector3f, Vector3f, Vector3f, long);
 
-	void GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec);
+	void GetTransformedGeometry(std::vector<Trig>& vec);
 };
 
 class Mesh : public Transform
@@ -85,7 +83,7 @@ private:
 	}
 public:
 	Mesh(std::string, Scene*, Vector3f, Vector3f, Vector3f);
-	void GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec);
+	void GetTransformedGeometry(std::vector<Trig>& vec);
 };
 
 class Light : public Transform {

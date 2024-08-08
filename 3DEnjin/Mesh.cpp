@@ -85,19 +85,19 @@ void Scene::DrawSkyBox(Canvas& c, long topColor, long bottomColor) const
 	float gradientSize = res.y;
 	c.DrawShape(topColor, bottomColor, { 0, horizonY - gradientSize }, { res.x, horizonY - gradientSize }, { res.x, horizonY + gradientSize }, { 0, horizonY + gradientSize });
 }
-void Scene::SortByDepth(std::vector<std::unique_ptr<Trig>>& v)
+void Scene::SortByDepth(std::vector<Trig>& v)
 {
 	std::vector<std::pair<float, size_t>> depthPairs;
 	depthPairs.reserve(v.size());
 
 	for (size_t i = 0; i < v.size(); ++i)
-		depthPairs.emplace_back(v[i]->DepthTest(this), i);
+		depthPairs.emplace_back(v[i].DepthTest(this), i);
 
 	std::sort(depthPairs.begin(), depthPairs.end(), [](const auto& a, const auto& b) {
 		return a.first > b.first;
 		});
 
-	std::vector<std::unique_ptr<Trig>> sortedV;
+	std::vector<Trig> sortedV;
 	sortedV.reserve(v.size());
 
 	for (const auto& pair : depthPairs) {
@@ -111,34 +111,26 @@ void Scene::RenderScene(Canvas& c) {
 		light->Render(c);
 	}
 
-	std::vector<std::unique_ptr<Trig>> trigs = {};
+	std::vector<Trig> trigs = {};
 	for (Transform* t : objects) {
 		t->GetTransformedGeometry(trigs);
 	}
 
-	//OutputDebugStringA((std::to_string(trigs.size()) + "\n").c_str());
 	SortByDepth(trigs);
-	for (const auto& v : trigs)
-		v->Render(this, c);
+	for (Trig v : trigs)
+		v.Render(this, c);
 }
 
-Trig::Trig(Vector3f v1, Vector3f v2, Vector3f v3, long c) {
-	this->points = new Vector3f[3]{ v1,v2,v3 };
+Trig::Trig(Scene* s, Vector3f v1, Vector3f v2, Vector3f v3, long c) {
+	this->points[0] = v1;
+	this->points[1] = v2;
+	this->points[2] = v3;
+
 	this->color = c;
-}
-Trig::~Trig()
-{
-	delete points;
-}
-std::vector<Vector3f> Trig::ToCameraSpace(Scene* s) {
-	if (!cameraSpaceCache.empty()) return cameraSpaceCache;
 
-	cameraSpaceCache.reserve(3);
 	Vector3f inverseRotation = s->cameraRotation * -1;
 	for (int i = 0; i < 3; i++)
-		cameraSpaceCache.emplace_back(Transform::RotateAround(points[i], s->cameraPosition, inverseRotation) - s->cameraPosition);
-
-	return cameraSpaceCache;
+		cameraSpacePoints[i] = Transform::RotateAround(points[i], s->cameraPosition, inverseRotation) - s->cameraPosition;
 }
 void Trig::Render(Scene* s, Canvas& c)
 {
@@ -168,8 +160,8 @@ void Trig::Render(Scene* s, Canvas& c)
 float Trig::DepthTest(Scene* s)
 {
 	Vector3f centroid(0, 0, 0);
-	for (Vector3f point : ToCameraSpace(s)) {
-		centroid = centroid + point;
+	for (int i = 0; i < 3; i++) {
+		centroid = centroid + cameraSpacePoints[i];
 	}
 
 	centroid = centroid / 3;
@@ -178,18 +170,20 @@ float Trig::DepthTest(Scene* s)
 }
 Vector3f Trig::CalculateNormal(Scene* s, bool inCameraSpace)
 {
-	std::vector<Vector3f> points;
-	if (inCameraSpace) points = ToCameraSpace(s);
-	else  points = std::vector<Vector3f>(this->points, this->points + 3);
-	Vector3f edge1 = points[1] - points[0];
-	Vector3f edge2 = points[2] - points[0];
+	Vector3f* pointSpace;
+	if (inCameraSpace) pointSpace = cameraSpacePoints;
+	else pointSpace = points;
+
+
+	Vector3f edge1 = pointSpace[1] - pointSpace[0];
+	Vector3f edge2 = pointSpace[2] - pointSpace[0];
 	Vector3f normal = edge1.Cross(edge2);
 	return normal.Normalize();
 }
 bool Trig::IsBackFace(Scene* s)
 {
 	Vector3f normal = CalculateNormal(s);
-	Vector3f viewDirection = ToCameraSpace(s)[0].Normalize();
+	Vector3f viewDirection = cameraSpacePoints[0].Normalize();
 	return normal.Dot(viewDirection) > 0;
 }
 
@@ -245,18 +239,17 @@ Cube::Cube(Scene* scene, Vector3f pos, Vector3f scale, Vector3f rot, long color)
 	scene->objects.push_back(this);
 	this->parent = scene;
 };
-void Cube::GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec)
+void Cube::GetTransformedGeometry(std::vector<Trig>& vec)
 {
 	for (int i = 0; i < points.size() / 3; i++) {
 		Vector3f v1 = RotateAround(points[i * 3] * scale, pivot, rotation) + (pos - pivot);
 		Vector3f v2 = RotateAround(points[i * 3 + 1] * scale, pivot, rotation) + (pos - pivot);
 		Vector3f v3 = RotateAround(points[i * 3 + 2] * scale, pivot, rotation) + (pos - pivot);
-		std::unique_ptr<Trig> ptr = std::make_unique<Trig>(v1, v2, v3, color);
-		if (!ptr.get()->IsBackFace(parent))
-			vec.push_back(std::move(ptr));
+		Trig trig(parent, v1, v2, v3, color);
+		if (!trig.IsBackFace(parent))
+			vec.push_back(trig);
 	}
 }
-
 
 void Mesh::FileReader(std::string filename)
 {
@@ -284,7 +277,7 @@ Mesh::Mesh(std::string filename, Scene* scene, Vector3f pos, Vector3f scale, Vec
 	this->parent = scene;
 	FileReader(filename);
 }
-void Mesh::GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec)
+void Mesh::GetTransformedGeometry(std::vector<Trig>& vec)
 {
 	for (const auto& face : faces) {
 		if (face.size() < 3) return;
@@ -292,9 +285,9 @@ void Mesh::GetTransformedGeometry(std::vector<std::unique_ptr<Trig>>& vec)
 		for (int i = 1; i < face.size() - 1; i++) {
 			Vector3f v2 = RotateAround(vertices[face[i]] * scale, pivot, rotation) + (pos - pivot);
 			Vector3f v3 = RotateAround(vertices[face[i + 1]] * scale, pivot, rotation) + (pos - pivot);
-			std::unique_ptr<Trig> ptr = std::make_unique<Trig>(v1, v2, v3, 0x515151);
-			if (!ptr.get()->IsBackFace(parent))
-				vec.push_back(std::move(ptr));
+			Trig trig(parent, v1, v2, v3, 0x515151);
+			if (!trig.IsBackFace(parent))
+				vec.push_back(trig);
 		}
 	}
 }
