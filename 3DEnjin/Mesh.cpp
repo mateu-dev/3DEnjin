@@ -188,23 +188,26 @@ bool Trig::IsBackFace(Scene* s)
 Transform::Transform(Vector3f pos, Vector3f scale, Vector3f rot, Vector3f pivot) :pos(pos), scale(scale), rotation(rot), pivot(pivot) {}
 Vector3f Transform::RotateAround(Vector3f point, Vector3f pivot, Vector3f rotation) {
 	rotation = rotation * RAD;
-	// Rotate Y
-	float dist = sqrtf(powf(point.y - pivot.y, 2) + powf(point.z - pivot.z, 2));
-	float defaultAngle = atan2f(point.y - pivot.y, point.z - pivot.z);
-	Vector2f rotVector = { sinf(defaultAngle + rotation.y) * dist ,cosf(defaultAngle + rotation.y) * dist };
-	point = { point.x,pivot.y + rotVector.y,pivot.z + rotVector.x };
-	// Rotate X
-	dist = sqrtf(powf(point.x - pivot.x, 2) + powf(point.z - pivot.z, 2));
-	defaultAngle = atan2f(point.x - pivot.x, point.z - pivot.z);
-	rotVector = { sinf(defaultAngle + rotation.x) * dist ,cosf(defaultAngle + rotation.x) * dist };
-	point = { pivot.x + rotVector.x,point.y,pivot.z + rotVector.y };
-	// Rotate Z
-	dist = sqrtf(powf(point.x - pivot.x, 2) + powf(point.y - pivot.y, 2));
-	defaultAngle = atan2f(point.x - pivot.x, point.y - pivot.y);
-	rotVector = { sinf(defaultAngle + rotation.z) * dist ,cosf(defaultAngle + rotation.z) * dist };
-	point = { pivot.x + rotVector.y,pivot.y + rotVector.x,point.z };
 
-	return point;
+	point = point - pivot;
+
+	// Rotate Y
+	float dist = sqrtf(powf(point.y, 2) + powf(point.z, 2));
+	float defaultAngle = atan2f(point.y, point.z);
+	Vector2f rotVector = { sinf(defaultAngle + rotation.y) * dist ,cosf(defaultAngle + rotation.y) * dist };
+	point = { point.x,rotVector.y,rotVector.x };
+	// Rotate X
+	dist = sqrtf(powf(point.x, 2) + powf(point.z, 2));
+	defaultAngle = atan2f(point.x, point.z);
+	rotVector = { sinf(defaultAngle + rotation.x) * dist ,cosf(defaultAngle + rotation.x) * dist };
+	point = { rotVector.x,point.y,rotVector.y };
+	// Rotate Z
+	dist = sqrtf(powf(point.x, 2) + powf(point.y, 2));
+	defaultAngle = atan2f(point.x, point.y);
+	rotVector = { sinf(defaultAngle + rotation.z) * dist ,cosf(defaultAngle + rotation.z) * dist };
+	point = { rotVector.y,rotVector.x,point.z };
+
+	return point + pivot;
 }
 
 const std::vector<Vector3f> Cube::points = {
