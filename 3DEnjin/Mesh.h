@@ -35,7 +35,7 @@ public:
 	Trig(Scene*, Vector3f, Vector3f, Vector3f, long);
 
 	void Render(Scene*, Canvas&);
-	float DepthTest(Scene*);
+	float DepthTest(Scene*) const;
 	Vector3f CalculateNormal(Scene* s, bool inCameraSpace = true);
 	bool IsBackFace(Scene*);
 };

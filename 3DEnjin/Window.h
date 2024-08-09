@@ -48,6 +48,7 @@ public:
 	void DrawCircle(const long& color, const Vector2f& pos, const float radius);
 	void DrawShape(const long& color, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4);
 	void DrawShape(const long& topColor, const long& bottomColor, Vector2f v1, Vector2f v2, Vector2f v3, Vector2f v4);
+	void DrawRadialGradient(Vector2f center, float radius, const long& innerColor);
 	void DrawRadialGradient(Vector2f center, float radius, const long& innerColor, const long& outerColor);
 	HDC hdc_;
 	Vector2i size;

@@ -282,7 +282,40 @@ void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& inner
 		DeleteObject(hBrush);
 	}
 }
+void Canvas::DrawRadialGradient(Vector2f center, float radius, const long& innerColor) {
+	int steps = 30;
+	for (int i = steps; i > 0; --i) {
+		float t = static_cast<float>(i) / steps;
+		float currentRadius = t * radius;
 
+		// Keep the RGB values of the inner color constant
+		BYTE r = GetRValue(innerColor);
+		BYTE g = GetGValue(innerColor);
+		BYTE b = GetBValue(innerColor);
+
+		// Interpolate the alpha value from 255 (opaque) to 0 (transparent)
+		BYTE a = static_cast<BYTE>(255 * (1 - t)); // Alpha transitions to 0
+
+		// Create an ARGB color
+		long currentColor = (a << 24) | RGB(r, g, b); // Assuming ARGB format
+
+		// Create a brush with the current color
+		HBRUSH hBrush = CreateSolidBrush(currentColor);
+		HBRUSH hOldBrush = (HBRUSH)SelectObject(hdc_, hBrush);
+
+		HPEN hOldPen = (HPEN)SelectObject(hdc_, GetStockObject(NULL_PEN));
+		// Draw the circle
+		Ellipse(hdc_,
+			static_cast<int>(center.x - currentRadius),
+			static_cast<int>(center.y - currentRadius),
+			static_cast<int>(center.x + currentRadius),
+			static_cast<int>(center.y + currentRadius));
+
+		SelectObject(hdc_, hOldPen);
+		SelectObject(hdc_, hOldBrush);
+		DeleteObject(hBrush);
+	}
+}
 COLORREF Canvas::MixColors(COLORREF color1, COLORREF color2, double percentage) {
 	percentage = clamp<double>(percentage, 0, 1);
 

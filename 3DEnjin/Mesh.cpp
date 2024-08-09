@@ -31,7 +31,7 @@ void Scene::Freecam(InputState& input, float speed, float deltaTime = 1)
 
 		Vector2i mouseDelta = mousePosition - winCenter + Vector2i(8, 31);
 
-		cameraRotation = cameraRotation - Vector3f(-mouseDelta.y, mouseDelta.x, 0) * 0.05;
+		cameraRotation = cameraRotation - Vector3f(mouseDelta.y, -mouseDelta.x, 0) * 0.05;
 
 		SetCursorPos(winCenter.x, winCenter.y);
 	}
@@ -39,8 +39,8 @@ void Scene::Freecam(InputState& input, float speed, float deltaTime = 1)
 	cameraRotation.x = clamp<float>(cameraRotation.x, -90, 90);
 
 	// Movement
-	Vector3f forward = Vector3f(0, cosf(-cameraRotation.y * RAD), sinf(-cameraRotation.y * RAD)) * speed * deltaTime;
-	Vector3f left = Vector3f(0, cosf((-cameraRotation.y + 90) * RAD), sinf((-cameraRotation.y + 90) * RAD)) * speed * deltaTime;
+	Vector3f forward = Vector3f(sinf(cameraRotation.y * RAD), 0, cosf(cameraRotation.y * RAD)) * speed * deltaTime;
+	Vector3f left = Vector3f(sinf((cameraRotation.y + 90) * RAD), 0, cosf((cameraRotation.y + 90) * RAD)) * speed * deltaTime;
 	if (input.keys[0x57])
 		cameraPosition = cameraPosition + forward;
 	if (input.keys[0x53])
@@ -50,9 +50,9 @@ void Scene::Freecam(InputState& input, float speed, float deltaTime = 1)
 	if (input.keys[0x44])
 		cameraPosition = cameraPosition + left;
 	if (input.keys[0x51])
-		cameraPosition.x += speed * deltaTime;
+		cameraPosition.y += speed * deltaTime;
 	if (input.keys[0x45])
-		cameraPosition.x -= speed * deltaTime;
+		cameraPosition.y -= speed * deltaTime;
 }
 void Scene::DrawSkyBox(Canvas& c, long topColor, long bottomColor) const
 {
@@ -62,8 +62,8 @@ void Scene::DrawSkyBox(Canvas& c, long topColor, long bottomColor) const
 	float z = aspectRatio.x / sinf(fov / 2 * RAD);
 
 	float yAngle = atan2f(aspectRatio.y / 2, z) / RAD;
-	float topCameraY = cameraRotation.x - yAngle;
-	float bottomCameraY = cameraRotation.x + yAngle;
+	float topCameraY = cameraRotation.x + yAngle;
+	float bottomCameraY = cameraRotation.x - yAngle;
 
 	float h = -topCameraY / (bottomCameraY - topCameraY);
 	float horizonY = h * res.y;
@@ -157,7 +157,7 @@ void Trig::Render(Scene* s, Canvas& c)
 	c.DrawLine(v2, v3);
 	c.DrawLine(v3, v1);*/
 }
-float Trig::DepthTest(Scene* s)
+float Trig::DepthTest(Scene* s) const
 {
 	Vector3f centroid(0, 0, 0);
 	for (int i = 0; i < 3; i++) {
@@ -191,23 +191,17 @@ Vector3f Transform::RotateAround(Vector3f point, Vector3f pivot, Vector3f rotati
 
 	point = point - pivot;
 
-	// Rotate Y
-	float dist = sqrtf(powf(point.y, 2) + powf(point.z, 2));
-	float defaultAngle = atan2f(point.y, point.z);
-	Vector2f rotVector = { sinf(defaultAngle + rotation.y) * dist ,cosf(defaultAngle + rotation.y) * dist };
-	point = { point.x,rotVector.y,rotVector.x };
-	// Rotate X
-	dist = sqrtf(powf(point.x, 2) + powf(point.z, 2));
-	defaultAngle = atan2f(point.x, point.z);
-	rotVector = { sinf(defaultAngle + rotation.x) * dist ,cosf(defaultAngle + rotation.x) * dist };
-	point = { rotVector.x,point.y,rotVector.y };
-	// Rotate Z
-	dist = sqrtf(powf(point.x, 2) + powf(point.y, 2));
-	defaultAngle = atan2f(point.x, point.y);
-	rotVector = { sinf(defaultAngle + rotation.z) * dist ,cosf(defaultAngle + rotation.z) * dist };
-	point = { rotVector.y,rotVector.x,point.z };
+	Quaternion base(point);
 
-	return point + pivot;
+	Quaternion x = createRotationQuaternion(rotation.x, 1, 0, 0);
+	Quaternion y = createRotationQuaternion(rotation.y, 0, 1, 0);
+	Quaternion z = createRotationQuaternion(rotation.z, 0, 0, 1);
+
+	Quaternion rot = x * y * z;
+
+	Quaternion res = rot.rotateVector(base);
+
+	return Vector3f(res.x, res.y, res.z) + pivot;
 }
 
 const std::vector<Vector3f> Cube::points = {
@@ -303,7 +297,7 @@ void Light::Render(Canvas& c)
 	c.DrawCircle(color, position, 10);
 }
 
-Sun::Sun(Scene* scene, float time) :Light(scene, { -50000,0,0 }, { 1,1,1 }, { 0,0,0 }), time(time), initialPosition({ -50000,0,0 }) {}
+Sun::Sun(Scene* scene, float time) :Light(scene, { 0,50000,0 }, { 1,1,1 }, { 0,0,0 }), time(time), initialPosition({ 50000,0,0 }) {}
 Sun::Sun(Scene* scene, float time, long color, float intensity) :Light(scene, { -50000,0,0 }, { 1,1,1 }, { 0,0,0 }) {
 	this->time = time;
 	this->initialPosition = { -50000,0,0 };
@@ -322,6 +316,7 @@ void Sun::Render(Canvas& c)
 
 	if (position == Vector2f(-1, -1)) position = lastPos;
 
+	if (position == Vector2f(-1, -1)) return;
 	c.DrawRadialGradient(position, 250, color, RGB(201, 242, 255));
 	c.DrawCircle(color, position, 50);
 

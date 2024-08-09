@@ -43,6 +43,44 @@ struct Vector3f {
 	}
 };
 
+struct Quaternion {
+	float w, x, y, z;
+
+	Quaternion(float w, float x, float y, float z) : w(w), x(x), y(y), z(z) {}
+	Quaternion(Vector3f v) : w(0), x(v.x), y(v.y), z(v.z) {}
+
+	Quaternion operator*(const Quaternion& q) const {
+		return Quaternion(
+			w * q.w - x * q.x - y * q.y - z * q.z,
+			w * q.x + x * q.w + y * q.z - z * q.y,
+			w * q.y - x * q.z + y * q.w + z * q.x,
+			w * q.z + x * q.y - y * q.x + z * q.w
+		);
+	}
+
+	Quaternion conjugate() const {
+		return Quaternion(w, -x, -y, -z);
+	}
+
+	Quaternion rotateVector(const Quaternion& v) const {
+		Quaternion q_conjugate = this->conjugate();
+		Quaternion rotated_v = (*this) * v * q_conjugate;
+		return rotated_v;
+	}
+};
+
+inline Quaternion createRotationQuaternion(float angle, float ux, float uy, float uz) {
+	float halfAngle = angle / 2;
+	float sinHalfAngle = sin(halfAngle);
+
+	return Quaternion(
+		cos(halfAngle),
+		ux * sinHalfAngle,
+		uy * sinHalfAngle,
+		uz * sinHalfAngle
+	);
+}
+
 // Addition Operators
 inline static Vector2f operator+(const Vector2f& a, const Vector2f& b) {
 	return { a.x + b.x, a.y + b.y };
